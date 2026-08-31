@@ -1,0 +1,1 @@
+{{ fn greet(name) }}x{{ ennet(name) }}x{{ enn }}{{ greet("Ada"}}{{  }}{{ greet("Ada"}}{{ greet("A) }

@@ -1,0 +1,1 @@
+{{ fn get(name) }}x{{ .ndn }}{{g3reet gret("Ada") }}

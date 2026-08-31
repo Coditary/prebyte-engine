@@ -1,0 +1,18 @@
+@PACKAGE_INIT@
+
+include(CMakeFindDependencyMacro)
+find_dependency(Lua REQUIRED)
+
+include("${CMAKE_CURRENT_LIST_DIR}/prebyte-engineTargets.cmake")
+
+if(NOT TARGET prebyte::engine_static AND TARGET prebyte::prebyte_engine_static)
+    add_library(prebyte::engine_static ALIAS prebyte::prebyte_engine_static)
+endif()
+if(NOT TARGET prebyte::engine AND TARGET prebyte::prebyte_engine)
+    add_library(prebyte::engine ALIAS prebyte::prebyte_engine)
+endif()
+if(NOT TARGET prebyte::engine_c AND TARGET prebyte::prebyte_engine_c)
+    add_library(prebyte::engine_c ALIAS prebyte::prebyte_engine_c)
+endif()
+
+check_required_components(prebyte-engine)

@@ -1,0 +1,1 @@
+{{ fn greet(name) }}x{{ endfn }}{{ fn greet(name) }}x{{ endfn }}{{reet greet("et(name) }}x{{ endfn greet(namAda") }}

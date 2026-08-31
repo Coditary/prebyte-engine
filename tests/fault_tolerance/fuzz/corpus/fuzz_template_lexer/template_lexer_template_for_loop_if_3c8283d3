@@ -1,0 +1,1 @@
+{{ if groups }}{{ for group in groups }}{{ if group.fea}}x{{ elseif group.arch}}y{{ else }}z{{ endif }}{e {nd!fo }}{{ endif }}

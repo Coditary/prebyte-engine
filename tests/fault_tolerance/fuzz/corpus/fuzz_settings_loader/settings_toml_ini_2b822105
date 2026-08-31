@@ -1,0 +1,4 @@
+name = Ada
+[rules]
+trim = true
+max= 2

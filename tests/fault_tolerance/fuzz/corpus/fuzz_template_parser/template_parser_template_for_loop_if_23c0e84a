@@ -1,0 +1,1 @@
+{{ if grs }}{{ for group in g }}{{ if group.featured }}x{{ elseif group.arch:ved }}y{{ elsdfoAr }}{{ endif }}

@@ -1,0 +1,195 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 31,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "dev",
+      "displayName": "Engine Dev Ninja",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-cmake/dev",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "PREBYTE_ENGINE_BUILD_TESTS": "ON",
+        "PREBYTE_ENGINE_BUILD_SHARED": "ON",
+        "PREBYTE_ENGINE_BUILD_STATIC": "ON",
+        "PREBYTE_ENGINE_BUILD_C": "ON"
+      }
+    },
+    {
+      "name": "coverage",
+      "displayName": "Engine Coverage Ninja",
+      "inherits": "dev",
+      "binaryDir": "${sourceDir}/build-cmake/coverage",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "PREBYTE_ENGINE_BUILD_SHARED": "OFF",
+        "PREBYTE_ENGINE_ENABLE_COVERAGE": "ON"
+      }
+    },
+    {
+      "name": "tidy",
+      "displayName": "Engine Clang-Tidy Ninja",
+      "inherits": "dev",
+      "binaryDir": "${sourceDir}/build-cmake/tidy",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_SCAN_FOR_MODULES": "OFF",
+        "PREBYTE_ENGINE_BUILD_TESTS": "OFF",
+        "PREBYTE_ENGINE_BUILD_C": "OFF"
+      }
+    },
+    {
+      "name": "sanitize",
+      "displayName": "Engine Sanitizer Ninja",
+      "inherits": "dev",
+      "binaryDir": "${sourceDir}/build-cmake/sanitize",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_SCAN_FOR_MODULES": "OFF",
+        "PREBYTE_ENGINE_BUILD_SHARED": "OFF",
+        "PREBYTE_ENGINE_BUILD_TESTS": "ON",
+        "PREBYTE_ENGINE_BUILD_C": "ON",
+        "PREBYTE_ENGINE_ENABLE_SANITIZERS": "ON",
+        "PREBYTE_ENGINE_SANITIZERS": "address,undefined"
+      }
+    },
+    {
+      "name": "tsan",
+      "displayName": "Engine ThreadSanitizer Ninja",
+      "inherits": "dev",
+      "binaryDir": "${sourceDir}/build-cmake/tsan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_SCAN_FOR_MODULES": "OFF",
+        "PREBYTE_ENGINE_BUILD_SHARED": "OFF",
+        "PREBYTE_ENGINE_BUILD_TESTS": "ON",
+        "PREBYTE_ENGINE_BUILD_C": "ON",
+        "PREBYTE_ENGINE_ENABLE_SANITIZERS": "ON",
+        "PREBYTE_ENGINE_SANITIZERS": "thread"
+      }
+    },
+    {
+      "name": "msan",
+      "displayName": "Engine MemorySanitizer Ninja",
+      "inherits": "dev",
+      "binaryDir": "${sourceDir}/build-cmake/msan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_C_COMPILER": "clang",
+        "CMAKE_CXX_SCAN_FOR_MODULES": "OFF",
+        "PREBYTE_ENGINE_BUILD_SHARED": "OFF",
+        "PREBYTE_ENGINE_BUILD_TESTS": "ON",
+        "PREBYTE_ENGINE_BUILD_C": "ON",
+        "PREBYTE_ENGINE_ENABLE_SANITIZERS": "ON",
+        "PREBYTE_ENGINE_SANITIZERS": "memory"
+      }
+    },
+    {
+      "name": "fuzz",
+      "displayName": "Engine Fuzzer Ninja",
+      "inherits": "dev",
+      "binaryDir": "${sourceDir}/build-cmake/fuzz",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_COMPILER": "clang++",
+        "CMAKE_CXX_SCAN_FOR_MODULES": "OFF",
+        "PREBYTE_ENGINE_BUILD_SHARED": "OFF",
+        "PREBYTE_ENGINE_BUILD_TESTS": "OFF",
+        "PREBYTE_ENGINE_BUILD_C": "OFF",
+        "PREBYTE_ENGINE_BUILD_FUZZERS": "ON",
+        "PREBYTE_ENGINE_ENABLE_SANITIZERS": "ON",
+        "PREBYTE_ENGINE_SANITIZERS": "address,undefined"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "dev",
+      "configurePreset": "dev"
+    },
+    {
+      "name": "dev-tests",
+      "configurePreset": "dev",
+      "targets": ["prebyte_engine_tests"]
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage"
+    },
+    {
+      "name": "coverage-tests",
+      "configurePreset": "coverage",
+      "targets": ["prebyte_engine_tests"]
+    },
+    {
+      "name": "tidy-engine",
+      "configurePreset": "tidy",
+      "targets": ["prebyte_engine_static"]
+    },
+    {
+      "name": "sanitize-tests",
+      "configurePreset": "sanitize",
+      "targets": ["prebyte_engine_tests"]
+    },
+    {
+      "name": "tsan-tests",
+      "configurePreset": "tsan",
+      "targets": ["prebyte_engine_tests"]
+    },
+    {
+      "name": "msan-tests",
+      "configurePreset": "msan",
+      "targets": ["prebyte_engine_tests"]
+    },
+    {
+      "name": "fuzz",
+      "configurePreset": "fuzz"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "dev",
+      "configurePreset": "dev",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "coverage",
+      "configurePreset": "coverage",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "sanitize",
+      "configurePreset": "sanitize",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "tsan",
+      "configurePreset": "tsan",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "msan",
+      "configurePreset": "msan",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}

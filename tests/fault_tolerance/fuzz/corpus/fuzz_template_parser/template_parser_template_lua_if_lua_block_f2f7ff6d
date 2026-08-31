@@ -1,0 +1,4 @@
+{{ lua:block }}
+return "Hello " {{ if enabled }}Yes{{ else }}No{{ endif }}
+me
+{{ endlua }}

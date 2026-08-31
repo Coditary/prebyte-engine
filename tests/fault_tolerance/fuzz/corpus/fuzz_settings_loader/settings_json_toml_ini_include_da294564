@@ -1,0 +1,8 @@
+[rules]
+trim = tяя
+trim = tяяяяяяяяяяяяяµяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяrяte
+max_include_deptN = GGяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяяrte
+max_include_deptN = GGGGGGGGGGGGGGGGGGGG&GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG1
+
+[profiles.dev.`ruLeяяяяs]
+ттттттттттттттттттттттттттттттттттттттттттттттттттттariables = true

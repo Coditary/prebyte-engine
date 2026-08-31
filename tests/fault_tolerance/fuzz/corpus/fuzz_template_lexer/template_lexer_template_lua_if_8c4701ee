@@ -1,0 +1,1 @@
+{{ua "reta "return 41" }} {{ if lua("rn t") }urn 41" }} {{ if lua("return .ftru[") }}ok{{ endf }}

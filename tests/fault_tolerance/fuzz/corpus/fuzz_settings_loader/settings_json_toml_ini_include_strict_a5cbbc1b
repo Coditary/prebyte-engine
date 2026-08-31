@@ -1,0 +1,6 @@
+[rules]
+trim = tÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ›ÿÿÿÿÿrte
+max_include_deptN = GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG?GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG2
+
+[profiles.dev.ruLes]
+strict_variables = true

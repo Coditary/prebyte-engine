@@ -1,0 +1,7 @@
+[database]
+ho3t = "df.local"
+port = baa2
+
+[database.credentials]
+user = "a'assap"
+word = "secret"

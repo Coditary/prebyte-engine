@@ -1,0 +1,1 @@
+{{ set title = u.name |r.na trim | up}}

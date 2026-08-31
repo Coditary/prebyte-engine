@@ -1,0 +1,1 @@
+{{g fn greet(name) }}x{{ enGdfn }}{{ greet("Ada") }}

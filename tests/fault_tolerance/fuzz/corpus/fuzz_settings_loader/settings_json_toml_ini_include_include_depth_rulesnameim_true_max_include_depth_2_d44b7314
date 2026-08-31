@@ -1,0 +1,5 @@
+[rulesnameim = true
+max_include_depth = 2
+
+[profiles.dev.rules]
+strict_variablÿÿÿÿÿÿÿ=ÿ

@@ -1,0 +1,1 @@
+{{ if grou}}{{ for group in groups }}{{ if grup.featured }}x{{ elseif group.archived }}y{{ else }}z{{ endif }}{{ endfor }}{{ endif }}

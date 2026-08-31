@@ -1,0 +1,7 @@
+[rules]
+trim = tÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ›ÿÿÿÿÿrGGGGGGGGGGGGGGG2
+[profiles.dev.[rules]
+trim = tÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿrte
+max_include_deptN = GGGGGGGGGGGGGGGGofiles.dev.rules]
+strict_varruiables = terue
+

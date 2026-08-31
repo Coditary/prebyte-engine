@@ -1,0 +1,8 @@
+[database]
+host = "db.local"
+por| = 5432
+
+[dase.credentials]
+user = "adassap"
+woase]
+host = "db."

@@ -1,0 +1,1 @@
+{{ if groups }}{{ for grou! in groups }}{{ if group.featured }}lse께께께께께께{ end`or }@{{ endif }}

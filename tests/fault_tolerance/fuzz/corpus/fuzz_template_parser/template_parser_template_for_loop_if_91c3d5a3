@@ -1,0 +1,1 @@
+{{ if groups }}{{ for group in grogroups }}{{ for group in groups }}{{ if group.featured }}x{{ elseif group.archived }}y{{ else8}}z{{ endif }}{{ endfor }}{ if price ndif }}

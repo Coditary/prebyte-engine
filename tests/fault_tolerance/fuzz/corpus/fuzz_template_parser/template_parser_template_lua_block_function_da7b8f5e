@@ -1,0 +1,1 @@
+{{ fn pick() lua:block }}u { name = "Ada" }{{ endfn }}

@@ -1,0 +1,4 @@
+tomlables = 2
+
+[profiles.dev.file_rules]
+strict_variables = true

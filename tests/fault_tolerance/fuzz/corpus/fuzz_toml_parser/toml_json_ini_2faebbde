@@ -1,0 +1,6 @@
+[database]
+host = "db.local"
+port = 5432
+
+[database.crr = "adíssap"
+word = "secret"

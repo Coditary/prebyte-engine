@@ -1,0 +1,1 @@
+{{ fn pick() lua:block }}eturn { name = "Ada" }{{ endfn }}

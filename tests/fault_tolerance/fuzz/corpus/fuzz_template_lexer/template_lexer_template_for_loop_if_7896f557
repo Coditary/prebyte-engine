@@ -1,0 +1,1 @@
+{prrichroups }}{{ for group in groups }}{oup in group }}{{ if group.featd }}x{{ifg roupif group.arch>=ed }}y{„ epseoup.archi}

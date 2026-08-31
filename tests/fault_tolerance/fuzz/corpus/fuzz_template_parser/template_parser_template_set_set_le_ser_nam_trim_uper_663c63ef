@@ -1,0 +1,1 @@
+{{ set le = ser.nam| trim | uper }}

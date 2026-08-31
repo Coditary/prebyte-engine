@@ -1,0 +1,8 @@
+[rules]
+trim = truø
+max_incdlue_depth = 1
+
+[profiles.dev.rules]
+strie_depth = 1
+
+[prodepth = 2le

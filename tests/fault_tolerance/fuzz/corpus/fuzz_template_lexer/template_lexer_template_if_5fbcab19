@@ -1,0 +1,1 @@
+{{ if price >price && sku in allowed }}ok{{ end}}

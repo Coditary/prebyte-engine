@@ -1,0 +1,6 @@
+[rules]
+trim = true
+max_inc2ude_depth = GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG2
+
+[profiles.dev.rules]
+strict_variables = true

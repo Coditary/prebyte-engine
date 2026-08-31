@@ -1,0 +1,7 @@
+[atabase]
+host = "db.local"
+port = 5432
+
+[database.cred[server]
+host="locentials]
+user 

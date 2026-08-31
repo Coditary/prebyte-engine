@@ -1,0 +1,1 @@
+{{ igrou }}{{ fo for group in grouroups }}{{ for group in groups }}{{ if gup.featured }}x{{ elseif group.archived }}}}y{{ e }}zf }'

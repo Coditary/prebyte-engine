@@ -1,0 +1,6 @@
+[rules]
+trim = truø
+max_include_depth = 1
+
+[profiles.dev.rules]
+strict_variables = true

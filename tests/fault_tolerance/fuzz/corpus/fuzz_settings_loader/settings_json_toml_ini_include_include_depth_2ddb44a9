@@ -1,0 +1,8 @@
+[rules]
+trim = truø
+max_include_depth = 1
+
+[profiles.dev.rules]
+strictÿÿÿÿÿÿÿÿÿÿclude_depth = 1
+
+[prodepth = 2les rue

@@ -1,0 +1,1 @@
+{{ set le = r.nae|trim| upr }}

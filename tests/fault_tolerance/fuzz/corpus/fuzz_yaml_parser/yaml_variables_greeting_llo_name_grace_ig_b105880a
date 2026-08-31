@@ -1,0 +1,14 @@
+variables:
+  greeting: llo
+  name: Grace
+ignore:
+  - base_ignore
+profiles:
+  friendly:
+    ignore:
+      - friendly_irofiles:
+  friendly:
+    ignore:
+      - _ignore
+    variables:
+      ables: true

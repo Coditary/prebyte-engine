@@ -1,0 +1,4 @@
+name = Ada
+[rulnamees]
+trim = true
+max_include_depth = 2

@@ -1,0 +1,517 @@
+name: ci
+
+on:
+  push:
+    branches:
+      - "**"
+    tags:
+      - "v*"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-test:
+    name: ${{ matrix.name }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-x86_64
+            runner: ubuntu-24.04
+            platform: linux
+            arch: x86_64
+            vcpkg_triplet: x64-linux
+            python_cmd: python3
+          - name: linux-aarch64
+            runner: ubuntu-24.04-arm
+            platform: linux
+            arch: aarch64
+            vcpkg_triplet: arm64-linux
+            python_cmd: python3
+          - name: macos-x86_64
+            runner: macos-15-intel
+            platform: macos
+            arch: x86_64
+            vcpkg_triplet: x64-osx
+            python_cmd: python3
+          - name: macos-aarch64
+            runner: macos-15
+            platform: macos
+            arch: aarch64
+            vcpkg_triplet: arm64-osx
+            python_cmd: python3
+          - name: windows-x86_64
+            runner: windows-2025
+            platform: windows
+            arch: x86_64
+            vcpkg_triplet: x64-windows-static
+            python_cmd: python
+          - name: windows-aarch64
+            runner: windows-11-arm
+            platform: windows
+            arch: aarch64
+            vcpkg_triplet: arm64-windows-static
+            python_cmd: python
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install Linux prerequisites
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends ninja-build pkg-config
+
+      - name: Install macOS prerequisites
+        if: runner.os == 'macOS'
+        shell: bash
+        env:
+          HOMEBREW_NO_AUTO_UPDATE: 1
+          HOMEBREW_NO_INSTALL_UPGRADE: 1
+        run: |
+          set -euo pipefail
+          missing=()
+          command -v ninja >/dev/null || missing+=(ninja)
+          if ((${#missing[@]} == 0)); then
+            echo "ninja already available"
+            exit 0
+          fi
+          for attempt in 1 2 3; do
+            if brew install "${missing[@]}"; then
+              exit 0
+            fi
+            echo "brew install attempt ${attempt} failed; retrying..."
+            sleep $((attempt * 15))
+          done
+          exit 1
+
+      - name: Bootstrap vcpkg (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          VCPKG_ROOT="$RUNNER_TEMP/vcpkg"
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+          echo "VCPKG_ROOT=$VCPKG_ROOT" >> "$GITHUB_ENV"
+          "$VCPKG_ROOT/vcpkg" install "lua:${{ matrix.vcpkg_triplet }}"
+
+      - name: Bootstrap vcpkg (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $VcpkgRoot = Join-Path $env:RUNNER_TEMP 'vcpkg'
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git $VcpkgRoot
+          & "$VcpkgRoot\bootstrap-vcpkg.bat" -disableMetrics
+          "VCPKG_ROOT=$VcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          & "$VcpkgRoot\vcpkg.exe" install "lua:${{ matrix.vcpkg_triplet }}"
+
+      - name: Set up MSVC (Windows)
+        if: runner.os == 'Windows'
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: ${{ matrix.arch == 'aarch64' && 'arm64' || 'x64' }}
+
+      - name: Restore vcpkg root (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $VcpkgRoot = Join-Path $env:RUNNER_TEMP 'vcpkg'
+          "VCPKG_ROOT=$VcpkgRoot" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Configure (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake -S . -B build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET="${{ matrix.vcpkg_triplet }}" \
+            -DPREBYTE_ENGINE_BUILD_TESTS=ON \
+            -DPREBYTE_ENGINE_BUILD_SHARED=ON \
+            -DPREBYTE_ENGINE_BUILD_STATIC=ON \
+            -DPREBYTE_ENGINE_BUILD_C=ON
+
+      - name: Configure (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cmake -S . -B build -G Ninja `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" `
+            -DVCPKG_TARGET_TRIPLET="${{ matrix.vcpkg_triplet }}" `
+            -DPREBYTE_ENGINE_BUILD_TESTS=ON `
+            -DPREBYTE_ENGINE_BUILD_SHARED=ON `
+            -DPREBYTE_ENGINE_BUILD_STATIC=ON `
+            -DPREBYTE_ENGINE_BUILD_C=ON
+
+      - name: Build (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build build --parallel
+
+      - name: Build (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          cmake --build build --parallel
+
+      - name: Test (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ctest --test-dir build --output-on-failure
+
+      - name: Install smoke (Unix)
+        if: runner.os != 'Windows'
+        shell: bash
+        env:
+          CMAKE_TOOLCHAIN_FILE: ${{ runner.temp }}/vcpkg/scripts/buildsystems/vcpkg.cmake
+          VCPKG_TARGET_TRIPLET: ${{ matrix.vcpkg_triplet }}
+        run: |
+          set -euo pipefail
+          chmod +x scripts/ci/smoke_install.sh
+          INSTALL_SMOKE_BUILD_DIR=build ./scripts/ci/smoke_install.sh
+
+      - name: Test (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ctest --test-dir build --output-on-failure
+
+      - name: Install smoke (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        env:
+          CMAKE_TOOLCHAIN_FILE: ${{ runner.temp }}\vcpkg\scripts\buildsystems\vcpkg.cmake
+          VCPKG_TARGET_TRIPLET: ${{ matrix.vcpkg_triplet }}
+        run: |
+          $env:INSTALL_SMOKE_BUILD_DIR = 'build'
+          bash scripts/ci/smoke_install.sh
+
+      - name: Package release artifact (Unix)
+        if: startsWith(github.ref, 'refs/tags/v') && runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          INSTALL_PREFIX="$RUNNER_TEMP/prebyte-engine-install"
+          cmake --install build --prefix "$INSTALL_PREFIX"
+          ARCHIVE="dist/prebyte-engine-${VERSION}-${{ matrix.platform }}-${{ matrix.arch }}.tar.gz"
+          mkdir -p dist
+          tar -C "$INSTALL_PREFIX" -czf "$ARCHIVE" .
+
+      - name: Package release artifact (Windows)
+        if: startsWith(github.ref, 'refs/tags/v') && runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $Version = $env:GITHUB_REF_NAME.Substring(1)
+          $InstallPrefix = Join-Path $env:RUNNER_TEMP 'prebyte-engine-install'
+          cmake --install build --prefix $InstallPrefix
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          $Archive = "dist/prebyte-engine-$Version-${{ matrix.platform }}-${{ matrix.arch }}.zip"
+          Compress-Archive -Path (Join-Path $InstallPrefix '*') -DestinationPath $Archive -Force
+
+      - name: Upload release artifact
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-${{ matrix.platform }}-${{ matrix.arch }}
+          path: |
+            dist/*.tar.gz
+            dist/*.zip
+          if-no-files-found: error
+
+  coverage:
+    name: coverage-linux-x86_64
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install coverage prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends gcovr ninja-build pkg-config
+
+      - name: Bootstrap vcpkg
+        shell: bash
+        run: |
+          set -euo pipefail
+          VCPKG_ROOT="$RUNNER_TEMP/vcpkg"
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+          echo "VCPKG_ROOT=$VCPKG_ROOT" >> "$GITHUB_ENV"
+          "$VCPKG_ROOT/vcpkg" install "lua:x64-linux"
+
+      - name: Configure coverage build
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --preset coverage \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=x64-linux
+
+      - name: Build coverage tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmake --build --preset coverage-tests --parallel
+
+      - name: Run coverage tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          ctest --preset coverage
+
+      - name: Generate coverage report
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/ci/generate_coverage_report.sh
+          COVERAGE_MIN_LINE=85 ./scripts/ci/generate_coverage_report.sh
+
+      - name: Upload coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: build-cmake/coverage/coverage.xml
+          if-no-files-found: error
+
+      - name: Upload coverage to Codecov
+        if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.fork == false
+        uses: codecov/codecov-action@v5
+        with:
+          files: build-cmake/coverage/coverage.xml
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+          verbose: true
+
+  clang-tidy:
+    name: clang-tidy-linux-x86_64
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install clang-tidy prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang clang-tidy ninja-build pkg-config
+
+      - name: Bootstrap vcpkg
+        shell: bash
+        run: |
+          set -euo pipefail
+          VCPKG_ROOT="$RUNNER_TEMP/vcpkg"
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+          echo "VCPKG_ROOT=$VCPKG_ROOT" >> "$GITHUB_ENV"
+          "$VCPKG_ROOT/vcpkg" install "lua:x64-linux"
+
+      - name: Run clang-tidy analyze
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/ci/run_clang_tidy.sh
+          ./scripts/ci/run_clang_tidy.sh analyze \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=x64-linux
+
+      - name: Run clang-tidy lint
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./scripts/ci/run_clang_tidy.sh lint
+
+      - name: Run clang-tidy security
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./scripts/ci/run_clang_tidy.sh security
+
+  sanitize:
+    name: asan-ubsan-linux-x86_64
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install sanitizer prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang ninja-build pkg-config
+
+      - name: Bootstrap vcpkg
+        shell: bash
+        run: |
+          set -euo pipefail
+          VCPKG_ROOT="$RUNNER_TEMP/vcpkg"
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+          echo "VCPKG_ROOT=$VCPKG_ROOT" >> "$GITHUB_ENV"
+          "$VCPKG_ROOT/vcpkg" install "lua:x64-linux"
+
+      - name: Run ASan/UBSan tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/ci/run_sanitize_tests.sh
+          ./scripts/ci/run_sanitize_tests.sh asan \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=x64-linux
+
+  tsan:
+    name: tsan-linux-x86_64
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install sanitizer prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang ninja-build pkg-config
+
+      - name: Bootstrap vcpkg
+        shell: bash
+        run: |
+          set -euo pipefail
+          VCPKG_ROOT="$RUNNER_TEMP/vcpkg"
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+          echo "VCPKG_ROOT=$VCPKG_ROOT" >> "$GITHUB_ENV"
+          "$VCPKG_ROOT/vcpkg" install "lua:x64-linux"
+
+      - name: Run TSan tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x scripts/ci/run_sanitize_tests.sh
+          ./scripts/ci/run_sanitize_tests.sh tsan \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=x64-linux
+
+  msan:
+    name: msan-linux-x86_64
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install sanitizer prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang cmake ninja-build pkg-config git
+
+      - name: Cache MSan libc++
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/prebyte-msan-libcxx
+          key: msan-libcxx-${{ runner.os }}-${{ hashFiles('scripts/ci/bootstrap_msan_libcxx.sh') }}
+
+      - name: Bootstrap vcpkg with MSan
+        shell: bash
+        env:
+          VCPKG_ROOT: ${{ runner.temp }}/vcpkg
+        run: |
+          set -euo pipefail
+          chmod +x scripts/ci/bootstrap_vcpkg_lua.sh
+          ./scripts/ci/bootstrap_vcpkg_lua.sh msan
+          echo "VCPKG_ROOT=$VCPKG_ROOT" >> "$GITHUB_ENV"
+
+      - name: Run MSan tests
+        shell: bash
+        env:
+          PREBYTE_MSAN_LIBCXX_PREFIX: ${{ runner.temp }}/prebyte-msan-libcxx
+        run: |
+          set -euo pipefail
+          chmod +x scripts/ci/run_sanitize_tests.sh scripts/ci/bootstrap_msan_libcxx.sh
+          ./scripts/ci/run_sanitize_tests.sh msan \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=x64-linux-msan \
+            -DVCPKG_OVERLAY_TRIPLETS="$GITHUB_WORKSPACE/cmake/vcpkg/triplets"
+
+  fuzz:
+    name: fuzz-linux-x86_64
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install fuzzer prerequisites
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends clang ninja-build pkg-config
+
+      - name: Bootstrap vcpkg
+        shell: bash
+        run: |
+          set -euo pipefail
+          VCPKG_ROOT="$RUNNER_TEMP/vcpkg"
+          git clone --depth 1 https://github.com/microsoft/vcpkg.git "$VCPKG_ROOT"
+          "$VCPKG_ROOT/bootstrap-vcpkg.sh" -disableMetrics
+          echo "VCPKG_ROOT=$VCPKG_ROOT" >> "$GITHUB_ENV"
+          "$VCPKG_ROOT/vcpkg" install "lua:x64-linux"
+
+      - name: Run fuzzers
+        shell: bash
+        env:
+          PREBYTE_ENGINE_FUZZ_MAX_TOTAL_TIME: 60
+        run: |
+          set -euo pipefail
+          chmod +x scripts/ci/run_fuzzers.sh
+          ./scripts/ci/run_fuzzers.sh \
+            -DCMAKE_TOOLCHAIN_FILE="$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" \
+            -DVCPKG_TARGET_TRIPLET=x64-linux
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build-test
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download packaged artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: dist
+
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          VERSION="${GITHUB_REF_NAME#v}"
+          if ! gh release view "$GITHUB_REF_NAME" --repo "$GH_REPO" >/dev/null 2>&1; then
+            gh release create "$GITHUB_REF_NAME" --repo "$GH_REPO" --title "prebyte-engine $VERSION" --notes "Automated release for prebyte-engine $VERSION."
+          fi
+          gh release edit "$GITHUB_REF_NAME" --repo "$GH_REPO" --draft=false --latest --title "prebyte-engine $VERSION" --notes "Automated release for prebyte-engine $VERSION."
+          gh release upload "$GITHUB_REF_NAME" dist/* --repo "$GH_REPO" --clobber

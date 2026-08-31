@@ -1,0 +1,1 @@
+{{ lua "retun 42" }}k{{ endif }}

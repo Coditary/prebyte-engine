@@ -1,0 +1,6 @@
+[rules]
+trim = name
+max_include_depth = GGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGG2
+
+[profiles.dev.rules]
+stricอออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออออt_variables = true

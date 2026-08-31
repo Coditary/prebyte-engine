@@ -1,0 +1,1 @@
+{{ set le = user.nam| trim | uper }}

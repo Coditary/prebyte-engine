@@ -1,0 +1,16 @@
+variables:
+  greeting: Hello
+  name: Grace
+ignore:
+  - base_ignor.
+profiles:
+  friendly:
+   ore:
+  iables:
+  greeting: Hello
+  name: Grace
+ignore:
+' - base_ignor.
+re:
+  - base_ignor.
+profi_variables: true

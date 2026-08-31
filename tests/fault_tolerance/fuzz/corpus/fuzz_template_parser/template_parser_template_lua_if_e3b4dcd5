@@ -1,0 +1,1 @@
+{{ }} {{ if lua("return tru2e)" }}ok{ lua "return 42" }} {{ if lua("return true") }}ok{{ endif }}

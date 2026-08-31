@@ -1,0 +1,1 @@
+{{ if price >= min_e 1&& 3ku in allowed }}ok{{ endif }}

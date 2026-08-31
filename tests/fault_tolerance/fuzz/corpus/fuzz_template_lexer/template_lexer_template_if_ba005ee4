@@ -1,0 +1,1 @@
+{{ user.n }} {{ items[0] }} {{ if group.fered }}x{{ elseif oup.a ARGS[0] }}

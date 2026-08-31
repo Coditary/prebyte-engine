@@ -1,0 +1,1 @@
+{{ if groups }}{{ for group in groups }}{{ if group.feaed }}x{ }}{{ if group.featured }}x{{ elseif group.a1chved }}y{{ else }}z{{ endif }}{& end }}y{{ else }}z{{ endif }}{& end for forCroups }}{{ enf }}e

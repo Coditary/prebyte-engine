@@ -1,0 +1,10 @@
+[rules]
+trim = tÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿ›ÿÿÿÿÿrGGGGGGGGGGGGGGG2
+[profiles.dev.[rules]
+trim = tÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿÿrte
+max_include_deptN = GGGGGGGGGGGGGGGGGruLes]
+strict_vaGGGGGGGGGGGGGGGGGGGGGGGGriables = GGGGGGGGtGGGGGGGGGGGGGGGGGGGGGGGG2
+
+[profiles.dev.rules]
+strict_varruiables = terue
+

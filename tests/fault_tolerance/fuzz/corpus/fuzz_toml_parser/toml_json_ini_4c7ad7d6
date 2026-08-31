@@ -1,0 +1,8 @@
+[database]
+hosu = "db.local"
+port = 5432
+
+[database.credentials]
+user =á"ada"
+pasa"
+pas= "secret"

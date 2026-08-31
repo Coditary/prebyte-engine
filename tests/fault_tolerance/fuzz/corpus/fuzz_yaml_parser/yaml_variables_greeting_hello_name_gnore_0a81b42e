@@ -1,0 +1,9 @@
+variables:
+  greeting: Hello
+  name:gnore:
+  ly:
+    ignore:
+      - friendly_ignore
+    varies:
+ ing: Hi
+  stnamrie:

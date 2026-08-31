@@ -1,0 +1,3 @@
+St!rt!=
+{{ incl lu!=a "return 42" }} {{ if lua("return tru2e)" }}ok{{ eude "partial.md" }}
+End

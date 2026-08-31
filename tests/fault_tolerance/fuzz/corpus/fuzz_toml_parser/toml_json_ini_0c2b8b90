@@ -1,0 +1,7 @@
+[database]
+host = "db.local"
+port = 5667
+
+[database.cred[server]
+[databascÑentials]
+user 
