@@ -2,7 +2,23 @@
 
 #include "support/TextUtil.h"
 
+#include <cctype>
+
 namespace prebyte {
+namespace {
+
+std::string_view lower_for_lookup(std::string_view name, char* buffer, std::size_t buffer_size, std::string& heap) {
+    if (name.size() <= buffer_size) {
+        for (std::size_t index = 0; index < name.size(); ++index) {
+            buffer[index] = static_cast<char>(std::tolower(static_cast<unsigned char>(name[index])));
+        }
+        return std::string_view(buffer, name.size());
+    }
+    heap = text::to_lower(std::string(name));
+    return heap;
+}
+
+}
 
 void VariableStore::set(const std::string& name, std::string value) {
     set_value(name, Value(std::move(value)));
@@ -17,14 +33,17 @@ void VariableStore::set_value(const std::string& name, Value value) {
 
 const Value* VariableStore::get_value(std::string_view name, bool case_sensitive) const {
     if (case_sensitive) {
-        auto it = exact_values_.find(std::string(name));
+        const auto it = exact_values_.find(name);
         if (it == exact_values_.end()) {
             return nullptr;
         }
         return &it->second;
     }
 
-    auto it = lower_values_.find(text::to_lower(std::string(name)));
+    char folded_buffer[128];
+    std::string folded_heap;
+    const std::string_view folded = lower_for_lookup(name, folded_buffer, sizeof(folded_buffer), folded_heap);
+    const auto it = lower_values_.find(folded);
     if (it == lower_values_.end()) {
         return nullptr;
     }

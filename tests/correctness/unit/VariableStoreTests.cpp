@@ -42,3 +42,19 @@ TEST_CASE(VariableStore_get_view_and_set_all_paths) {
     REQUIRE_EQ(store.get_value("enabled", true)->to_string(), std::string("true"));
     REQUIRE_EQ(store.values().size(), static_cast<std::size_t>(4));
 }
+
+TEST_CASE(VariableStore_get_value_finds_boundary_and_long_names) {
+    prebyte::VariableStore store;
+    const std::string short_boundary(128, 'n');
+    const std::string long_name(180, 'q');
+    store.set(short_boundary, "boundary");
+    store.set(long_name, "long");
+
+    REQUIRE_EQ(*store.get_view(short_boundary, true), std::string_view("boundary"));
+    REQUIRE(store.get_view(std::string(128, 'N'), true) == std::nullopt);
+    REQUIRE_EQ(*store.get(std::string(128, 'N'), false), std::string("boundary"));
+
+    REQUIRE_EQ(*store.get_view(long_name, true), std::string_view("long"));
+    REQUIRE_EQ(*store.get(std::string(180, 'Q'), false), std::string("long"));
+    REQUIRE(store.get_value(std::string(180, 'z'), false) == nullptr);
+}
